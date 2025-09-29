@@ -1,0 +1,131 @@
+{% extends 'cashflow/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Список записей ДДС</h2>
+    <a href="{% url 'cashflow:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Добавить запись
+    </a>
+</div>
+
+<!-- Filter Form -->
+<div class="filter-container">
+    <h5 class="mb-3">Фильтры</h5>
+    <form method="get" class="filter-form">
+        <div class="filter-row">
+            <div class="form-group">
+                <label for="date_from" class="form-label">Дата с</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="form-group">
+                <label for="date_to" class="form-label">Дата по</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+            </div>
+            <div class="form-group">
+                <label for="status" class="form-label">Статус</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Все</option>
+                    <option value="business" {% if request.GET.status == 'business' %}selected{% endif %}>Бизнес</option>
+                    <option value="personal" {% if request.GET.status == 'personal' %}selected{% endif %}>Личное</option>
+                    <option value="tax" {% if request.GET.status == 'tax' %}selected{% endif %}>Налог</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="type" class="form-label">Тип</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">Все</option>
+                    {% for type in types %}
+                        <option value="{{ type.id }}" {% if request.GET.type|stringformat:"s" == type.id|stringformat:"s" %}selected{% endif %}>{{ type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="form-group">
+                <label for="category" class="form-label">Категория</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Все</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category|stringformat:"s" == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="subcategory" class="form-label">Подкатегория</label>
+                <select class="form-select" id="subcategory" name="subcategory">
+                    <option value="">Все</option>
+                    {% for subcategory in subcategories %}
+                        <option value="{{ subcategory.id }}" {% if request.GET.subcategory|stringformat:"s" == subcategory.id|stringformat:"s" %}selected{% endif %}>{{ subcategory.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group align-self-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel me-1"></i> Применить
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- CashFlow Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                        <th>Тип</th>
+                        <th>Категория</th>
+                        <th>Подкатегория</th>
+                        <th>Сумма (₽)</th>
+                        <th>Комментарий</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cashflow in cashflows %}
+                    <tr>
+                        <td>{{ cashflow.date|date:"d.m.Y" }}</td>
+                        <td>
+                            <span class="badge
+                                {% if cashflow.status == 'business' %}
+                                    badge.business
+                                {% elif cashflow.status == 'personal' %}
+                                    badge.personal
+                                {% else %}
+                                    badge.tax
+                                {% endif %}
+                            ">
+                                {{ cashflow.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ cashflow.type.name }}</td>
+                        <td>{{ cashflow.category.name }}</td>
+                        <td>{{ cashflow.subcategory.name }}</td>
+                        <td class="{% if cashflow.type.name == 'Списание' %}text-danger{% else %}text-success{% endif %}">
+                            {{ cashflow.amount|floatformat:2 }}
+                        </td>
+                        <td>{{ cashflow.comment|truncatechars:30 }}</td>
+                        <td>
+                            <a href="{% url 'cashflow:edit' cashflow.id %}" class="btn btn-sm btn-outline-primary btn-action">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'cashflow:delete' cashflow.id %}" class="btn btn-sm btn-outline-danger btn-action">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">Записи не найдены.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
